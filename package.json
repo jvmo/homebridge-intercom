@@ -1,6 +1,6 @@
 {
   "name": "homebridge-intercom",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Homebridge plugin for an intercom system",
   "main": "index.js",
   "scripts": {
