@@ -1,68 +1,60 @@
-const { Accessory, Service, Characteristic } = require('homebridge');
 const Gpio = require('onoff').Gpio;
 
-class IntercomAccessory {
+module.exports = function (homebridge) {
+  const Accessory = homebridge.platformAccessory;
+  const Service = homebridge.hap.Service;
+  const Characteristic = homebridge.hap.Characteristic;
+  const UUIDGen = homebridge.hap.uuid;
+
+  class IntercomAccessory {
     constructor(log, config) {
-        if (!config || !config.relayPin || !config.voltagePin) {
-            throw new Error('Invalid configuration. Please provide relayPin and voltagePin.');
-        }
+      this.log = log;
+      this.name = config.name;
+      this.relayPin = new Gpio(config.relayPin, 'out');
+      this.voltagePin = new Gpio(config.voltagePin, 'in', 'both');
 
-        this.log = log;
-        this.name = config.name || 'Intercom';
-        this.relayPin = config.relayPin;
-        this.voltagePin = config.voltagePin;
+      this.service = new Service.Switch(this.name);
+      this.service
+        .getCharacteristic(Characteristic.On)
+        .on('get', this.getSwitchOn.bind(this))
+        .on('set', this.setSwitchOn.bind(this));
 
-        this.relay = new Gpio(this.relayPin, 'out');
-        this.voltageSensor = new Gpio(this.voltagePin, 'in', 'both');
+      this.voltagePin.watch(this.handleVoltageChange.bind(this));
 
-        this.service = new Service.Switch(this.name);
-        this.voltageService = new Service.ContactSensor(`${this.name} Bell`);
-
-        this.service
-            .getCharacteristic(Characteristic.On)
-            .on('get', this.getState.bind(this))
-            .on('set', this.setState.bind(this));
-
-        this.voltageService
-            .getCharacteristic(Characteristic.ContactSensorState)
-            .on('get', this.getContactSensorState.bind(this));
-
-        this.voltageSensor.watch(this.handleVoltageChange.bind(this));
+      // Additional setup if needed
     }
 
-    getState(callback) {
-        const isOn = this.relay.readSync() === 1;
-        callback(null, isOn);
+    getSwitchOn(callback) {
+      const isSwitchOn = this.relayPin.readSync() === 1;
+      callback(null, isSwitchOn);
     }
 
-    setState(value, callback) {
-        this.relay.writeSync(value ? 1 : 0);
-        callback(null);
-    }
-
-    getContactSensorState(callback) {
-        // You can customize this logic based on your actual intercom bell behavior
-        const isBellPressed = /* Logic to determine if bell is pressed */;
-        callback(null, isBellPressed ? Characteristic.ContactSensorState.CONTACT_DETECTED : Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+    setSwitchOn(value, callback) {
+      this.relayPin.writeSync(value ? 1 : 0);
+      callback(null);
     }
 
     handleVoltageChange(err, value) {
-        if (err) {
-            this.log.error(err.message);
-            return;
-        }
+      if (err) {
+        this.log.error(`Voltage reading error: ${err}`);
+        return;
+      }
 
-        this.log(`Voltage value: ${value}`);
-        // Add your code for further voltage measurement processing here
-        // You can also trigger notifications when the voltage changes if needed
-        this.voltageService.setCharacteristic(Characteristic.ContactSensorState, value === 1 ? Characteristic.ContactSensorState.CONTACT_DETECTED : Characteristic.ContactSensorState.CONTACT_NOT_DETECTED);
+      // Use the voltage value as needed
+      this.log(`Voltage reading: ${value}`);
+    }
+
+    // Additional methods if needed
+
+    identify(callback) {
+      this.log(`Identify requested for ${this.name}`);
+      callback(null);
     }
 
     getServices() {
-        return [this.service, this.voltageService];
+      return [this.service];
     }
-}
+  }
 
-module.exports = (homebridge) => {
-    homebridge.registerAccessory('homebridge-intercom', 'Intercom', IntercomAccessory);
+  homebridge.registerAccessory('homebridge-intercom', 'Intercom', IntercomAccessory);
 };
