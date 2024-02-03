@@ -1,17 +1,17 @@
 {
-    "bridge": {
-        "name": "Homebridge",
-        "username": "CC:22:3D:E3:CE:30",
-        "port": 51826,
-        "pin": "031-45-154"
-    },
-    "accessories": [
-        {
-            "accessory": "homebridge-intercom",
-            "name": "Intercom",
-            "relayPin": 7,
-            "voltagePin": 17
-        }
-    ],
-    "platforms": []
+  "bridge": {
+    "name": "Homebridge",
+    "username": "CC:22:3D:E3:CE:30",
+    "port": 51826,
+    "pin": "031-45-154"
+  },
+  "accessories": [
+    {
+      "accessory": "homebridge-intercom",
+      "name": "Intercom",
+      "relayPin": 7,
+      "voltagePin": 17
+    }
+  ],
+  "platforms": []
 }
