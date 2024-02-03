@@ -1,7 +1,7 @@
 {
   "name": "homebridge-intercom",
   "version": "1.0.0",
-  "description": "Homebridge plugin for an old intercom system",
+  "description": "Homebridge plugin for an intercom system",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,7 +11,6 @@
   "license": "MIT",
   "dependencies": {
     "homebridge": "^1.0.0",
-    "onoff": "^5.0.0",
-    "say": "^1.0.0"
+    "onoff": "^5.0.0"
   }
 }
