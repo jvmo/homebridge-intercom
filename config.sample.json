@@ -5,13 +5,17 @@
     "port": 51826,
     "pin": "031-45-154"
   },
+  "description": "This is an example configuration for the Homebridge Intercom Door plugin",
   "accessories": [
     {
-      "accessory": "intercom-door",
+      "accessory": "IntercomDoor",
       "name": "Intercom",
-      "relayPin": 7,
-      "voltagePin": 17
+      "lockPin": 5,
+      "voltagePin": 17,
+      "activeLow": false,
+      "reedSwitchActiveLow": false,
+      "unlockingDuration": 2,
+      "lockWithMemory": true
     }
-  ],
-  "platforms": []
+  ]
 }
