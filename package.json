@@ -1,27 +1,38 @@
 {
   "name": "homebridge-intercom-door",
   "version": "1.0.0",
-  "description": "Homebridge plugin for an Intercom Door",
+  "description": "Homebridge plugin for an Intercom Door with Voltage Measurement",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "homebridge",
-    "intercom door",
-    "Raspberry Pi"
+    "intercom",
+    "door",
+    "Raspberry Pi",
+    "gpio",
+    "voltage measurement",
+    "homekit"
   ],
-  "author": "jvmo",
+  "author": "Your Name",
   "license": "MIT",
   "dependencies": {
-    "homebridge": "latest",
-    "rpio": "2.2.0"
+    "rpio": "^2.2.0",
+    "underscore": "^1.8.3",
+    "node-persist": "^2.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/your-repo-name"
   },
   "homebridge": {
     "accessories": [
       {
         "accessory": "IntercomDoor",
-        "name": "Intercom Door"
+        "name": "Intercom Door",
+        "lockPin": 7,
+        "voltagePin": 17
       }
     ],
     "platforms": []
