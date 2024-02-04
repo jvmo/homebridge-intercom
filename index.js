@@ -1,60 +1,55 @@
-const Gpio = require('onoff').Gpio;
+const rpio = require('rpio');
+const { Accessory, Service, Characteristic } = require('homebridge');
 
-module.exports = function (homebridge) {
-  const Accessory = homebridge.platformAccessory;
-  const Service = homebridge.hap.Service;
-  const Characteristic = homebridge.hap.Characteristic;
-  const UUIDGen = homebridge.hap.uuid;
+const PLUGIN_NAME = 'intercom-door';
+const ACCESSORY_NAME = 'Intercom Door';
 
-  class IntercomAccessory {
-    constructor(log, config) {
-      this.log = log;
-      this.name = config.name;
-      this.relayPin = new Gpio(config.relayPin, 'out');
-      this.voltagePin = new Gpio(config.voltagePin, 'in', 'both');
+// Add your relay and voltage measurement setup here
+const GPIO_PIN_RELAY = 7;
+const GPIO_PIN_VOLTAGE = 17;
 
-      this.service = new Service.Switch(this.name);
-      this.service
-        .getCharacteristic(Characteristic.On)
-        .on('get', this.getSwitchOn.bind(this))
-        .on('set', this.setSwitchOn.bind(this));
+rpio.open(GPIO_PIN_RELAY, rpio.OUTPUT, rpio.LOW);
+rpio.open(GPIO_PIN_VOLTAGE, rpio.INPUT);
 
-      this.voltagePin.watch(this.handleVoltageChange.bind(this));
+class IntercomDoorAccessory {
+  constructor(log, config) {
+    this.log = log;
+    this.name = config.name || ACCESSORY_NAME;
 
-      // Additional setup if needed
-    }
+    // Initialize the accessory
+    this.accessory = new Accessory(this.name, Accessory.Categories.DOOR);
 
-    getSwitchOn(callback) {
-      const isSwitchOn = this.relayPin.readSync() === 1;
-      callback(null, isSwitchOn);
-    }
+    // Set up services
+    this.setupServices();
 
-    setSwitchOn(value, callback) {
-      this.relayPin.writeSync(value ? 1 : 0);
-      callback(null);
-    }
-
-    handleVoltageChange(err, value) {
-      if (err) {
-        this.log.error(`Voltage reading error: ${err}`);
-        return;
-      }
-
-      // Use the voltage value as needed
-      this.log(`Voltage reading: ${value}`);
-    }
-
-    // Additional methods if needed
-
-    identify(callback) {
-      this.log(`Identify requested for ${this.name}`);
-      callback(null);
-    }
-
-    getServices() {
-      return [this.service];
-    }
+    // Log initialization
+    this.log(`${this.name} accessory initialized.`);
   }
 
-  homebridge.registerAccessory('homebridge-intercom', 'Intercom', IntercomAccessory);
+  setupServices() {
+    // Add your services setup here
+    const doorbellService = this.accessory.addService(Service.Doorbell, 'Doorbell');
+
+    // Respond to Doorbell events
+    doorbellService.getCharacteristic(Characteristic.ProgrammableSwitchEvent)
+      .on('get', (callback) => {
+        // Logic to determine the state of the doorbell
+        // For example, check GPIO pin status
+        const isDoorbellPressed = /* Add logic to check GPIO pin */;
+        callback(null, isDoorbellPressed ? 1 : 0);
+      });
+
+    // Add more services as needed
+  }
+
+  getServices() {
+    return [this.accessory];
+  }
+}
+
+module.exports = (homebridge) => {
+  Service = homebridge.hap.Service;
+  Accessory = homebridge.hap.Accessory;
+  Characteristic = homebridge.hap.Characteristic;
+  homebridge.registerAccessory(PLUGIN_NAME, ACCESSORY_NAME, IntercomDoorAccessory);
 };
