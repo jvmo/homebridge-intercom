@@ -1,16 +1,29 @@
 {
-  "name": "homebridge-intercom",
-  "version": "1.0.1",
-  "description": "Homebridge plugin for an intercom system",
+  "name": "homebridge-intercom-door",
+  "version": "1.0.0",
+  "description": "Homebridge plugin for an Intercom Door",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["homebridge", "homekit", "intercom"],
-  "author": "jvmo",
+  "keywords": [
+    "homebridge",
+    "intercom door",
+    "Raspberry Pi"
+  ],
+  "author": "Your Name",
   "license": "MIT",
   "dependencies": {
-    "homebridge": "^1.0.0",
-    "onoff": "^5.0.0"
+    "homebridge": "latest",
+    "rpio": "2.2.0"
+  },
+  "homebridge": {
+    "accessories": [
+      {
+        "accessory": "IntercomDoor",
+        "name": "Intercom Door"
+      }
+    ],
+    "platforms": []
   }
 }
