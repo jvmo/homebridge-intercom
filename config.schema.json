@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Intercom Door Plugin Config Schema",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Intercom Door accessory"
+    },
+    "relayPin": {
+      "type": "integer",
+      "description": "GPIO pin connected to the relay (e.g., 7)"
+    },
+    "voltagePin": {
+      "type": "integer",
+      "description": "GPIO pin connected to the voltage measurement (e.g., 17)"
+    },
+    // Add more configuration properties as needed
+  },
+  "required": ["name", "relayPin", "voltagePin"],
+  "additionalProperties": false
+}
