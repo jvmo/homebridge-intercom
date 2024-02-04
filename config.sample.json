@@ -7,7 +7,7 @@
   },
   "accessories": [
     {
-      "accessory": "homebridge-intercom",
+      "accessory": "intercom-door",
       "name": "Intercom",
       "relayPin": 7,
       "voltagePin": 17
