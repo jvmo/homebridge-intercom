@@ -1,5 +1,7 @@
 {
   "name": "Intercom Door",
   "relayPin": 7,
-  "voltagePin": 17
+  "voltagePin": 17,
+  "doorbellSwitchName": "Doorbell",
+  "doorStatusSwitchName": "Door Status"
 }
