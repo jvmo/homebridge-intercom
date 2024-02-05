@@ -1,23 +1,17 @@
 {
   "name": "homebridge-intercom-door",
-  "version": "1.0.3",
-  "description": "Homebridge plugin for intercom door",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": ["homebridge", "intercom", "door"],
-  "author": "jvmo",
-  "license": "ISC",
-  "dependencies": {
-    "rpio": "^2.1.6",
-    "hap-nodejs": "^0.10.5"
-  },
+  "version": "0.0.1",
+  "description": "A Homebridge plugin for an intercom door system",
+  "license": "MIT",
+  "keywords": ["homebridge-plugin"],
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=16.0.0",
+    "homebridge": ">=1.3.0"
   },
-  "homebridge": {
-    "name": "IntercomDoor",
-    "platform": "IntercomDoor"
-  }
+  "dependencies": {
+    "axios": "^0.24.0",
+    "hap-nodejs": "^0.9.7",
+    "onoff": "^6.0.0"
+  },
+  "main": "index.js"
 }
