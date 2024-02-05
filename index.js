@@ -12,7 +12,7 @@ module.exports = function(homebridge) {
   Characteristic = homebridge.hap.Characteristic;
   HomebridgeAPI = homebridge;
 
-  homebridge.registerAccessory('intercom-door', 'IntercomDoor', ElectromagneticLockAccessory);
+  homebridge.registerAccessory('homebridge-intercom-door', 'IntercomDoor', ElectromagneticLockAccessory);
 }
 
 function ElectromagneticLockAccessory(log, config) {
@@ -50,7 +50,7 @@ function ElectromagneticLockAccessory(log, config) {
   this.infoService = new Service.AccessoryInformation();
   this.infoService
     .setCharacteristic(Characteristic.Manufacturer, 'jvmo')
-    .setCharacteristic(Characteristic.Model, 'intercom-door')
+    .setCharacteristic(Characteristic.Model, 'homebridge-intercom-door')
     .setCharacteristic(Characteristic.SerialNumber, 'Version 1.0.0');
 
   this.unlockTimeout;
