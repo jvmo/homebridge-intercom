@@ -1,27 +1,43 @@
+// config.schema.json
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
-  "type": "object",
-  "properties": {
-    "name": {
-      "type": "string",
-      "description": "The name of the accessory"
-    },
-    "relayPin": {
-      "type": "integer",
-      "description": "GPIO pin for relay control"
-    },
-    "voltagePin": {
-      "type": "integer",
-      "description": "GPIO pin for voltage measurement"
-    },
-    "doorbellSwitchName": {
-      "type": "string",
-      "description": "Name of the doorbell switch"
-    },
-    "doorStatusSwitchName": {
-      "type": "string",
-      "description": "Name of the door status switch"
+  "pluginAlias": "Intercom Door",
+  "pluginType": "accessory",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Accessory Name",
+        "type": "string",
+        "required": true,
+        "default": "Intercom Door",
+        "description": "The name of the accessory."
+      },
+      "relayPin": {
+        "title": "Relay Pin",
+        "type": "integer",
+        "required": true,
+        "default": 7,
+        "description": "The GPIO pin for the relay.",
+        "minimum": 0,
+        "maximum": 40
+      },
+      "voltagePin": {
+        "title": "Voltage Pin",
+        "type": "integer",
+        "required": true,
+        "default": 17,
+        "description": "The GPIO pin for the voltage measurement.",
+        "minimum": 0,
+        "maximum": 40
+      },
+      "apiURL": {
+        "title": "API URL",
+        "type": "string",
+        "required": true,
+        "default": "http://localhost:8080",
+        "description": "The URL of the REST API server.",
+        "format": "uri"
+      }
     }
-  },
-  "required": ["name", "relayPin", "voltagePin", "doorbellSwitchName", "doorStatusSwitchName"]
+  }
 }
