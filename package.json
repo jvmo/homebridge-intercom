@@ -1,5 +1,5 @@
 {
-  "name": "intercom-door",
+  "name": "homebridge-intercom-door",
   "version": "1.0.0",
   "description": "Homebridge plugin for an Intercom Door with Voltage Measurement",
   "main": "index.js",
@@ -24,7 +24,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jvmo/intercom-door"
+    "url": "https://github.com/jvmo/homebridge-intercom-door"
   },
   "homebridge": {
     "accessories": [
