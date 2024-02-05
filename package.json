@@ -1,6 +1,6 @@
 {
   "name": "homebridge-intercom-door",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Homebridge plugin for intercom door",
   "main": "index.js",
   "scripts": {
