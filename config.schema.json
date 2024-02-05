@@ -13,7 +13,15 @@
     "voltagePin": {
       "type": "integer",
       "description": "GPIO pin for voltage measurement"
+    },
+    "doorbellSwitchName": {
+      "type": "string",
+      "description": "Name of the doorbell switch"
+    },
+    "doorStatusSwitchName": {
+      "type": "string",
+      "description": "Name of the door status switch"
     }
   },
-  "required": ["name", "relayPin", "voltagePin"]
+  "required": ["name", "relayPin", "voltagePin", "doorbellSwitchName", "doorStatusSwitchName"]
 }
