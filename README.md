@@ -1,4 +1,4 @@
-# homebridge-intercom
+# homebridge-intercom-door
 homebridge-intercom plugin base on Raspberry Pi Zero W and a single relay.
 
 ##Relay Connections: 
