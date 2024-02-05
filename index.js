@@ -1,68 +1,119 @@
-const rpio = require('rpio');
-const { execSync } = require('child_process');
-const { Accessory, Categories } = require('homebridge');
-const { Service, Characteristic } = require('hap-nodejs');
+// index.js
+"use strict";
 
-class IntercomDoorPlugin {
+const axios = require("axios"); // for making HTTP requests
+const { Service, Characteristic, Accessory } = require("hap-nodejs"); // for HomeKit accessory and service definitions
 
-  constructor(log, config, api) {
-    this.log = log;
-    this.config = config;
-    this.api = api;
+module.exports = function (homebridge) {
+  // register the accessory with the plugin name, the accessory name, and the accessory constructor
+  homebridge.registerAccessory("homebridge-intercom-door", "Intercom Door", IntercomDoor);
+};
 
-    if (this.api) {
-      this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
-    }
-  }
+// the accessory constructor
+function IntercomDoor(log, config) {
+  // get the accessory information from the config file
+  this.name = config.name || "Intercom Door"; // the name of the accessory
+  this.relayPin = config.relayPin || 7; // the GPIO pin for the relay
+  this.voltagePin = config.voltagePin || 17; // the GPIO pin for the voltage measurement
+  this.apiURL = config.apiURL || "http://localhost:8080"; // the URL of the REST API server
+  this.log = log; // the logger object
 
-  configureAccessory(accessory) {
-    this.log(`${accessory.displayName} accessory has been added.`);
-  }
+  // initialize the GPIO pins using the onoff library
+  const Gpio = require("onoff").Gpio;
+  this.relay = new Gpio(this.relayPin, "out"); // set the relay pin as an output
+  this.voltage = new Gpio(this.voltagePin, "in", "both"); // set the voltage pin as an input with both edge detection
 
-  didFinishLaunching() {
-    const { name, relayPin, voltagePin } = this.config;
+  // create a new accessory with the information service
+  this.accessory = new Accessory(this.name, uuid.generate(this.name));
+  this.informationService = this.accessory.getService(Service.AccessoryInformation);
+  this.informationService
+    .setCharacteristic(Characteristic.Manufacturer, "jvmo")
+    .setCharacteristic(Characteristic.Model, "Intercom Door")
+    .setCharacteristic(Characteristic.SerialNumber, "1234567890");
 
-    rpio.init({ mapping: 'gpio' });
+  // create a new switch service for the relay
+  this.switchService = this.accessory.addService(Service.Switch, this.name);
+  this.switchService
+    .getCharacteristic(Characteristic.On) // get the on/off characteristic
+    .on("get", this.getSwitchState.bind(this)) // bind the getter function
+    .on("set", this.setSwitchState.bind(this)); // bind the setter function
 
-    const accessory = new Accessory(name, Categories.DOORBELL);
-    accessory.addService(Service.Doorbell, name);
+  // create a new contact sensor service for the voltage
+  this.contactService = this.accessory.addService(Service.ContactSensor, this.name);
+  this.contactService
+    .getCharacteristic(Characteristic.ContactSensorState) // get the contact sensor state characteristic
+    .on("get", this.getContactState.bind(this)); // bind the getter function
 
-    const relay = rpio.open(relayPin, rpio.OUTPUT, rpio.LOW);
-    const voltage = rpio.open(voltagePin, rpio.INPUT);
-
-    voltage.poll((pin) => {
-      const voltageValue = rpio.read(pin);
-      accessory.getService(Service.Doorbell)
-        .getCharacteristic(Characteristic.ProgrammableSwitchEvent)
-        .updateValue(voltageValue);
-
-      if (voltageValue) {
-        this.log('Bell was pressed!');
-        this.sendNotification('Bell was pressed');
+  // listen for changes in the voltage pin
+  this.voltage.watch((err, value) => {
+    if (err) {
+      this.log.error(err); // log the error
+    } else {
+      this.log.info("Voltage changed to " + value); // log the value
+      this.contactService.updateCharacteristic(Characteristic.ContactSensorState, value); // update the contact sensor state
+      if (value === 1) {
+        this.sendNotification("Bell was pressed"); // send a notification if the voltage is high
       }
-    }, rpio.POLL_HIGH);
-
-    accessory.getService(Service.Doorbell)
-      .getCharacteristic(Characteristic.ProgrammableSwitchEvent)
-      .on('set', (value, callback) => {
-        this.log(`Door is ${value ? 'open' : 'closed'}`);
-        this.sendNotification(`Door is ${value ? 'open' : 'closed'}`);
-        rpio.write(relay, value ? rpio.HIGH : rpio.LOW);
-        callback(null);
-      });
-
-    this.api.registerPlatformAccessories('homebridge-intercom-door', 'IntercomDoor', [accessory]);
-  }
-
-  sendNotification(message) {
-    try {
-      execSync(`echo ${message} | wall`);
-    } catch (error) {
-      this.log(`Error sending notification: ${error.message}`);
     }
-  }
+  });
 }
 
-module.exports = (api) => {
-  api.registerAccessory('homebridge-intercom-door', 'IntercomDoor', IntercomDoorPlugin);
+// the getter function for the switch state
+IntercomDoor.prototype.getSwitchState = function (callback) {
+  // read the value of the relay pin
+  this.relay.read((err, value) => {
+    if (err) {
+      this.log.error(err); // log the error
+      callback(err); // return the error
+    } else {
+      this.log.info("Switch state is " + value); // log the value
+      callback(null, value); // return the value
+    }
+  });
+};
+
+// the setter function for the switch state
+IntercomDoor.prototype.setSwitchState = function (value, callback) {
+  // write the value to the relay pin
+  this.relay.write(value, (err) => {
+    if (err) {
+      this.log.error(err); // log the error
+      callback(err); // return the error
+    } else {
+      this.log.info("Switch state set to " + value); // log the value
+      callback(); // return success
+      if (value === 1) {
+        this.sendNotification("Door is open"); // send a notification if the relay is on
+      } else {
+        this.sendNotification("Door is closed"); // send a notification if the relay is off
+      }
+    }
+  });
+};
+
+// the getter function for the contact sensor state
+IntercomDoor.prototype.getContactState = function (callback) {
+  // read the value of the voltage pin
+  this.voltage.read((err, value) => {
+    if (err) {
+      this.log.error(err); // log the error
+      callback(err); // return the error
+    } else {
+      this.log.info("Contact sensor state is " + value); // log the value
+      callback(null, value); // return the value
+    }
+  });
+};
+
+// the function to send a notification to the Home app
+IntercomDoor.prototype.sendNotification = function (message) {
+  // make a POST request to the REST API server with the message
+  axios
+    .post(this.apiURL + "/notify", { message: message })
+    .then((response) => {
+      this.log.info("Notification sent: " + message); // log the message
+    })
+    .catch((error) => {
+      this.log.error(error); // log the error
+    });
 };
