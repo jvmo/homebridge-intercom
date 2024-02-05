@@ -14,4 +14,4 @@ homebridge-intercom plugin base on Raspberry Pi Zero W and a single relay.
 #Install the plugin using the following command:
 
 ```bash
-npm install -g homebridge-intercom
+npm install -g homebridge-intercom-door
