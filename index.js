@@ -1,8 +1,7 @@
-// index.js
 "use strict";
 
 const axios = require("axios"); // for making HTTP requests
-const { Service, Characteristic, Accessory } = require("hap-nodejs"); // for HomeKit accessory and service definitions
+const uuid = require("uuid"); // for generating unique identifiers
 
 module.exports = function (homebridge) {
   // register the accessory with the plugin name, the accessory name, and the accessory constructor
@@ -10,13 +9,17 @@ module.exports = function (homebridge) {
 };
 
 // the accessory constructor
-function IntercomDoor(log, config) {
+function IntercomDoor(log, config, api) {
   // get the accessory information from the config file
   this.name = config.name || "Intercom Door"; // the name of the accessory
   this.relayPin = config.relayPin || 7; // the GPIO pin for the relay
   this.voltagePin = config.voltagePin || 17; // the GPIO pin for the voltage measurement
   this.apiURL = config.apiURL || "http://localhost:8080"; // the URL of the REST API server
   this.log = log; // the logger object
+  this.api = api; // the Homebridge API object
+
+  // get the HAP object from the API
+  const { Accessory, Service, Characteristic } = this.api.hap;
 
   // initialize the GPIO pins using the onoff library
   const Gpio = require("onoff").Gpio;
@@ -24,7 +27,7 @@ function IntercomDoor(log, config) {
   this.voltage = new Gpio(this.voltagePin, "in", "both"); // set the voltage pin as an input with both edge detection
 
   // create a new accessory with the information service
-  this.accessory = new Accessory(this.name, uuid.generate(this.name));
+  this.accessory = new Accessory(this.name, uuid.v4());
   this.informationService = this.accessory.getService(Service.AccessoryInformation);
   this.informationService
     .setCharacteristic(Characteristic.Manufacturer, "jvmo")
