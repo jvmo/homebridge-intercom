@@ -11,12 +11,12 @@ module.exports = function (homebridge) {
 // the accessory constructor
 function IntercomDoor(log, config, api) {
   // get the accessory information from the config file
+  this.log = log; // the logger object
+  this.api = api; // the Homebridge API object
   this.name = config.name || "Intercom Door"; // the name of the accessory
   this.relayPin = config.relayPin || 7; // the GPIO pin for the relay
   this.voltagePin = config.voltagePin || 17; // the GPIO pin for the voltage measurement
   this.apiURL = config.apiURL || "http://localhost:8080"; // the URL of the REST API server
-  this.log = log; // the logger object
-  this.api = api; // the Homebridge API object
 
   // get the HAP object from the API
   const { Accessory, Service, Characteristic } = this.api.hap;
@@ -27,7 +27,7 @@ function IntercomDoor(log, config, api) {
   this.voltage = new Gpio(this.voltagePin, "in", "both"); // set the voltage pin as an input with both edge detection
 
   // create a new accessory with the information service
-  this.accessory = new Accessory(this.name, uuid.v4());
+  this.accessory = new Accessory(this.name, uuid.v4()); // updated line
   this.informationService = this.accessory.getService(Service.AccessoryInformation);
   this.informationService
     .setCharacteristic(Characteristic.Manufacturer, "jvmo")
@@ -119,4 +119,10 @@ IntercomDoor.prototype.sendNotification = function (message) {
     .catch((error) => {
       this.log.error(error); // log the error
     });
+};
+
+// the getServices method for the accessory
+IntercomDoor.prototype.getServices = function () {
+  // return an array of the services
+  return [this.informationService, this.switchService, this.contactService];
 };
