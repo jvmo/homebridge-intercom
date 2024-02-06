@@ -15,7 +15,7 @@
         "title": "Relay Pin",
         "type": "integer",
         "required": true,
-        "default": 7,
+        "default": 4,
         "description": "The GPIO pin for the relay.",
         "minimum": 0,
         "maximum": 40
