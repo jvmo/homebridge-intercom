@@ -4,7 +4,7 @@ homebridge-intercom plugin base on Raspberry Pi Zero W and a single relay.
 ##Relay Connections: 
 #VCC from relay to 5V on Raspberry Pi Zero W. 
 #GND from relay to GND on Raspberry Pi Zero W. 
-#IND from relay to GPIO 7 on Raspberry Pi Zero W.
+#IND from relay to GPIO 4 on Raspberry Pi Zero W.
 
 ##Voltage Measurement (Using Voltage Divider): 
 #Connect one leg of the resistor to the voltage source. 
