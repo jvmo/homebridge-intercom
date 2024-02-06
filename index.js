@@ -14,7 +14,7 @@ function IntercomDoor(log, config, api) {
   this.log = log; // the logger object
   this.api = api; // the Homebridge API object
   this.name = config.name || "Intercom Door"; // the name of the accessory
-  this.relayPin = config.relayPin || 7; // the GPIO pin for the relay
+  this.relayPin = config.relayPin || 4; // the GPIO pin for the relay
   this.voltagePin = config.voltagePin || 17; // the GPIO pin for the voltage measurement
   this.apiURL = config.apiURL || "http://localhost:8080"; // the URL of the REST API server
 
