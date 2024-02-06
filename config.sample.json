@@ -9,7 +9,7 @@
     {
       "accessory": "Intercom Door",
       "name": "Intercom Door",
-      "relayPin": 7,
+      "relayPin": 4,
       "voltagePin": 17,
       "apiURL": "http://localhost:8080"
     }
