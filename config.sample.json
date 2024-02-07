@@ -5,14 +5,18 @@
     "port": 51826,
     "pin": "031-45-154"
   },
+  "description": "This is an example configuration for the Homebridge GPIO Electromagnetic Lock plugin",
   "accessories": [
     {
-      "accessory": "Intercom Door",
-      "name": "Intercom Door",
-      "relayPin": 4,
-      "voltagePin": 17,
-      "apiURL": "http://localhost:8080"
+      "accessory": "ElectromagneticLock",
+      "name": "YourLockName",
+      "lockPin": 5,
+      "doorPin": 16,
+      "voltagePin": 22,
+      "activeLow": false,
+      "reedSwitchActiveLow": false,
+      "unlockingDuration": 2,
+      "lockWithMemory": true
     }
-  ],
-  "platforms": []
+  ]
 }
