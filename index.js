@@ -1,139 +1,190 @@
-"use strict";
+var _ = require('underscore');
+var rpio = require('rpio');
+var Service, Characteristic, HomebridgeAPI;
 
-const axios = require("axios"); // for making HTTP requests
-const uuid = require("uuid"); // for generating unique identifiers
+const STATE_UNSECURED = 0;
+const STATE_SECURED = 1;
+const STATE_JAMMED = 2;
+const STATE_UNKNOWN = 3;
 
-module.exports = function (homebridge) {
-  // register the accessory with the plugin name, the accessory name, and the accessory constructor
-  homebridge.registerAccessory("homebridge-intercom-door", "Intercom Door", IntercomDoor);
-};
+module.exports = function(homebridge) {
+  Service = homebridge.hap.Service;
+  Characteristic = homebridge.hap.Characteristic;
+  HomebridgeAPI = homebridge;
 
-// the accessory constructor
-function IntercomDoor(log, config, api) {
-  // get the accessory information from the config file
-  this.log = log; // the logger object
-  this.api = api; // the Homebridge API object
-  this.name = config.name || "Intercom Door"; // the name of the accessory
-  this.relayPin = config.relayPin || 4; // the GPIO pin for the relay
-  this.voltagePin = config.voltagePin || 17; // the GPIO pin for the voltage measurement
-  this.apiURL = config.apiURL || "http://localhost:8080"; // the URL of the REST API server
-
-  // get the HAP object from the API
-  const { Accessory, Service, Characteristic } = this.api.hap;
-
-  // initialize the GPIO pins using the onoff library
-  const Gpio = require("onoff").Gpio;
-  this.relay = new Gpio(this.relayPin, "out"); // set the relay pin as an output
-  this.voltage = new Gpio(this.voltagePin, "in", "both"); // set the voltage pin as an input with both edge detection
-
-  // create a new accessory with the information service
-  this.accessory = new Accessory(this.name, uuid.v4(), Service.LockMechanism); // use LockMechanism service
-  this.informationService = this.accessory.getService(Service.AccessoryInformation);
-  this.informationService
-    .setCharacteristic(Characteristic.Manufacturer, "jvmo")
-    .setCharacteristic(Characteristic.Model, "Intercom Door")
-    .setCharacteristic(Characteristic.SerialNumber, "1234567890");
-
-  // create a new lock service for the relay
-  this.lockService = this.accessory.addService(Service.LockMechanism, this.name);
-  this.lockService
-    .getCharacteristic(Characteristic.LockCurrentState)
-    .on("get", this.getLockState.bind(this)); // bind the getter function
-  this.lockService
-    .getCharacteristic(Characteristic.LockTargetState)
-    .on("get", this.getLockState.bind(this)) // bind the getter function
-    .on("set", this.setLockState.bind(this)); // bind the setter function
-
-  // create a new contact sensor service for the voltage
-  this.contactService = this.accessory.addService(Service.ContactSensor, this.name);
-  this.contactService
-    .getCharacteristic(Characteristic.ContactSensorState) // get the contact sensor state characteristic
-    .on("get", this.getContactState.bind(this)); // bind the getter function
-
-  // listen for changes in the voltage pin
-  this.voltage.watch((err, value) => {
-    if (err) {
-      this.log.error(err); // log the error
-    } else {
-      this.log.info("Voltage changed to " + value); // log the value
-      this.contactService.updateCharacteristic(Characteristic.ContactSensorState, value); // update the contact sensor state
-      if (value === 1) {
-        this.sendNotification("Bell was pressed"); // send a notification if the voltage is high
-      }
-    }
-  });
+  homebridge.registerAccessory('homebridge-intercom-door', 'ElectromagneticLock', ElectromagneticLockAccessory);
 }
 
-// the getter function for the lock state
-IntercomDoor.prototype.getLockState = function (callback) {
-  // read the value of the relay pin
-  this.relay.read((err, value) => {
-    if (err) {
-      this.log.error(err); // log the error
-      callback(err); // return the error
-    } else {
-      const lockState = value === 0 ? this.api.hap.Characteristic.LockCurrentState.UNSECURED : this.api.hap.Characteristic.LockCurrentState.SECURED;
-      this.log.info("Lock state is " + lockState); // log the value
-      callback(null, lockState); // return the value
+function ElectromagneticLockAccessory(log, config) {
+  _.defaults(config, { activeLow: true, reedSwitchActiveLow: true, unlockingDuration: 2, lockWithMemory: true });
+
+  this.log = log;
+  this.name = config['name'];
+  this.lockPin = config['lockPin'];
+  this.doorPin = config['doorPin'];
+  this.initialState = config['activeLow'] ? rpio.HIGH : rpio.LOW;
+  this.activeState = config['activeLow'] ? rpio.LOW : rpio.HIGH;
+  this.reedSwitchActiveState = config['reedSwitchActiveLow'] ? rpio.LOW : rpio.HIGH;
+  this.unlockingDuration = config['unlockingDuration'];
+  this.lockWithMemory = config['lockWithMemory'];
+
+  // GPIO pin for voltage measurement
+  this.voltagePin = 17; // GPIO 17
+
+  // Setup the voltage pin as an input with both edge detection
+  rpio.open(this.voltagePin, rpio.INPUT, rpio.PULL_DOWN);
+  rpio.poll(this.voltagePin, this.handleVoltageChange.bind(this), rpio.POLL_BOTH);
+
+  this.cacheDirectory = HomebridgeAPI.user.persistPath();
+  this.storage = require('node-persist');
+  this.storage.initSync({ dir: this.cacheDirectory, forgiveParseErrors: true });
+
+  var cachedCurrentState = this.storage.getItemSync(this.name);
+  if ((cachedCurrentState === undefined) || (cachedCurrentState === false)) {
+    this.currentState = STATE_UNKNOWN;
+  } else {
+    this.currentState = cachedCurrentState;
+  }
+
+  this.lockState = this.currentState;
+  if (this.currentState == STATE_UNKNOWN) {
+    this.targetState = STATE_SECURED;
+  } else {
+    this.targetState = this.currentState;
+  }
+
+  this.service = new Service.LockMechanism(this.name);
+
+  this.infoService = new Service.AccessoryInformation();
+  this.infoService
+    .setCharacteristic(Characteristic.Manufacturer, 'jvmo')
+    .setCharacteristic(Characteristic.Model, 'Intercom Door')
+    .setCharacteristic(Characteristic.SerialNumber, '1234567890');
+
+  this.unlockTimeout;
+
+  // use gpio pin numbering
+  rpio.init({ mapping: 'gpio' });
+  rpio.open(this.lockPin, rpio.OUTPUT, this.initialState);
+
+  if (this.doorPin && !this.lockWithMemory) {
+    this.log("Electromagnetic lock without memory doesn't support doorPin, setting to null. Consider using a separate contact sensor.");
+    this.doorPin = undefined;
+  }
+
+  if (this.doorPin) {
+    rpio.open(this.doorPin, rpio.INPUT);
+    if (this.lockWithMemory) {
+      rpio.poll(this.doorPin, this.calculateLockWithMemoryState.bind(this));
     }
-  });
+  }
+
+  this.service
+    .getCharacteristic(Characteristic.LockCurrentState)
+    .on('get', this.getCurrentState.bind(this));
+
+  this.service
+    .getCharacteristic(Characteristic.LockTargetState)
+    .on('get', this.getTargetState.bind(this))
+    .on('set', this.setTargetState.bind(this));
+}
+
+ElectromagneticLockAccessory.prototype.getCurrentState = function(callback) {
+  this.log("Lock current state: %s", this.currentState);
+  callback(null, this.currentState);
+}
+
+ElectromagneticLockAccessory.prototype.getTargetState = function(callback) {
+  this.log("Lock target state: %s", this.targetState);
+  callback(null, this.targetState);
+}
+
+ElectromagneticLockAccessory.prototype.setTargetState = function(state, callback) {
+  this.log('Setting lock to %s', state ? 'secured' : 'unsecured');
+  if (state && this.lockWithMemory) {
+    this.log("Can't lock electromagnetic lock with memory.");
+    this.service.updateCharacteristic(Characteristic.LockCurrentState, state);
+    setTimeout(function () {
+      this.service.updateCharacteristic(Characteristic.LockTargetState, this.targetState);
+      this.service.updateCharacteristic(Characteristic.LockCurrentState, this.currentState);
+    }.bind(this), 500);
+    callback();
+  } else if (state && !this.lockWithMemory) {
+    clearTimeout(this.unlockTimeout);
+    this.secureLock();
+    callback();
+  } else {
+    rpio.write(this.lockPin, this.activeState);
+    this.service.setCharacteristic(Characteristic.LockCurrentState, state);
+    this.lockState = state;
+    this.storage.setItemSync(this.name, this.lockState);
+    this.unlockTimeout = setTimeout(this.secureLock.bind(this), this.unlockingDuration * 1000);
+    callback();
+  }
+}
+
+ElectromagneticLockAccessory.prototype.calculateLockWithMemoryState = function () {
+  rpio.msleep(20);
+  let doorOpen = rpio.read(this.doorPin) ? true : false;
+  if (doorOpen && this.lockState == STATE_UNSECURED) {
+    this.log('Door has been opened, lock: secured, current state: unsecured.');
+    this.lockState = STATE_SECURED;
+    this.currentState = STATE_UNSECURED;
+    this.targetState = STATE_UNSECURED;
+  } else if (doorOpen && this.lockState == STATE_SECURED) {
+    this.log('Door has been opened, lock already secured, current state: unsecured.');
+    this.currentState = STATE_UNSECURED;
+    this.targetState = STATE_UNSECURED;
+  } else if (!doorOpen && this.lockState == STATE_SECURED) {
+    this.log('Door has been closed, lock already secured, current state: secured.');
+    this.currentState = STATE_SECURED;
+    this.targetState = STATE_SECURED;
+  } else if (!doorOpen && this.lockState == STATE_UNSECURED) {
+    this.log('Door has been closed, lock: unsecured, current state: unsecured.');
+    this.currentState = STATE_UNSECURED;
+    this.targetState = STATE_UNSECURED;
+  } else {
+    this.log('State unknown, door open: ' + doorOpen + ', lock state: ' + this.lockState);
+    this.lockState == STATE_UNKNOWN;
+    this.currentState = STATE_UNKNOWN;
+  }
+  this.service.updateCharacteristic(Characteristic.LockTargetState, this.targetState);
+  this.service.updateCharacteristic(Characteristic.LockCurrentState, this.currentState);
+  this.storage.setItemSync(this.name, this.currentState);
+}
+
+ElectromagneticLockAccessory.prototype.secureLock = function () {
+  rpio.write(this.lockPin, this.initialState);
+  if (!this.doorPin && !this.lockWithMemory) {
+    this.service.updateCharacteristic(Characteristic.LockTargetState, STATE_SECURED);
+    this.service.updateCharacteristic(Characteristic.LockCurrentState, STATE_SECURED);
+    this.currentState = STATE_SECURED;
+    this.targetState = STATE_SECURED;
+    this.storage.setItemSync(this.name, this.currentState);
+  } else if (!this.doorPin && this.lockWithMemory) {
+    this.service.updateCharacteristic(Characteristic.LockTargetState, STATE_SECURED);
+    this.service.updateCharacteristic(Characteristic.LockCurrentState, STATE_SECURED);
+    this.service.updateCharacteristic(Characteristic.LockCurrentState, STATE_UNKNOWN);
+    this.currentState = STATE_UNKNOWN;
+    this.targetState = STATE_SECURED;
+    this.storage.setItemSync(this.name, this.currentState);
+  }
+}
+
+ElectromagneticLockAccessory.prototype.handleVoltageChange = function (pin) {
+  // Read the current voltage level
+  var voltageLevel = rpio.read(pin);
+
+  // Perform an action based on the voltage level
+  if (voltageLevel === rpio.HIGH) {
+    this.log('Doorbell button pressed (voltage high)');
+    // Add your logic here for when the doorbell button is pressed
+  } else {
+    this.log('Doorbell button released (voltage low)');
+    // Add your logic here for when the doorbell button is released
+  }
 };
 
-// the setter function for the lock state
-IntercomDoor.prototype.setLockState = function (value, callback) {
-  // write the inverted value to the relay pin
-  this.relay.write(value === this.api.hap.Characteristic.LockTargetState.UNSECURED ? 0 : 1, (err) => {
-    if (err) {
-      this.log.error(err); // log the error
-      callback(err); // return the error
-    } else {
-      const lockState = value === this.api.hap.Characteristic.LockTargetState.UNSECURED
-        ? this.api.hap.Characteristic.LockCurrentState.UNSECURED
-        : this.api.hap.Characteristic.LockCurrentState.SECURED;
-      this.log.info("Lock state set to " + lockState); // log the value
-      callback(); // return success
-      if (value === this.api.hap.Characteristic.LockTargetState.UNSECURED) {
-        this.sendNotification("Door is open"); // send a notification if the relay is on
-        // Automatically close the door after 2 seconds
-        setTimeout(() => {
-          this.setLockState(this.api.hap.Characteristic.LockTargetState.SECURED, () => {});
-        }, 2000);
-      } else {
-        this.sendNotification("Door is closed"); // send a notification if the relay is off
-      }
-    }
-  });
-};
-
-// the getter function for the contact sensor state
-IntercomDoor.prototype.getContactState = function (callback) {
-  // read the value of the voltage pin
-  this.voltage.read((err, value) => {
-    if (err) {
-      this.log.error(err); // log the error
-      callback(err); // return the error
-    } else {
-      this.log.info("Contact sensor state is " + value); // log the value
-      callback(null, value); // return the value
-    }
-  });
-};
-
-// the function to send a notification to the Home app
-IntercomDoor.prototype.sendNotification = function (message) {
-  // make a POST request to the REST API server with the message
-  axios
-    .post(this.apiURL + "/notify", { message: message })
-    .then((response) => {
-      this.log.info("Notification sent: " + message); // log the message
-    })
-    .catch((error) => {
-      this.log.error(error); // log the error
-    });
-};
-
-// the getServices method for the accessory
-IntercomDoor.prototype.getServices = function () {
-  // return an array of the services
-  return [this.informationService, this.lockService, this.contactService];
-};
+ElectromagneticLockAccessory.prototype.getServices = function () {
+  return [this.infoService, this.service];
+}
