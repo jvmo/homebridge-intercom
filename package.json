@@ -5,50 +5,33 @@
   "license": "MIT",
   "keywords": [
     "homebridge-plugin",
-    "raspberry-pi",
+    "homebridge",
+    "raspberry",
     "gpio",
+    "lock",
     "lock-mechanism",
+    "electromagnetic-lock",
     "homekit"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/jvmo/homebridge-intercom-door"
   },
-  "homepage": "https://github.com/jvmo/homebridge-intercom-door#readme",
-  "bugs": {
-    "url": "https://github.com/jvmo/homebridge-intercom-door/issues"
-  },
-  "engines": {
-    "homebridge": ">=1.3.0",
-    "node": ">=14.0.0"
-  },
-  "author": "jvmo",
-  "maintainers": [
-    {
-      "name": "jvmo",
-      "email": "jvmodeveloper@gmail.com"
-    }
-  ],
   "dependencies": {
-    "homebridge": "latest",
+    "homebridge-intercom-door": "^0.0.25",
     "node-persist": "^2.1.0",
     "rpio": "^2.2.0",
     "underscore": "^1.8.3"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
-  },
-  "peerDependencies": {
-    "homebridge": "latest"
-  },
   "engines": {
-    "node": ">=14.0.0"
+    "homebridge": ">=1.3.0",
+    "node": ">=16.0.0"
   },
   "homebridge": {
     "platforms": [
       {
-        "platform": "ElectromagneticLock"
+        "platform": "ElectromagneticLock",
+        "name": "ElectromagneticLock"
       }
     ],
     "accessories": [
@@ -63,6 +46,15 @@
         "unlockingDuration": 2,
         "lockWithMemory": true
       }
-    ]
-  }
+    ],
+    "peerDependencies": {
+      "homebridge": "^1.6.0"
+    }
+  },
+  "maintainers": [
+    {
+      "name": "jvmo",
+      "email": "jvmodeveloper@gmail.com"
+    }
+  ]
 }
