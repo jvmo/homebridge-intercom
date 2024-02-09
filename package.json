@@ -1,60 +1,56 @@
 {
   "name": "homebridge-intercom-door",
-  "version": "0.0.25",
-  "description": "Homebridge plugin to control electromagnetic lock via Raspberry Pi GPIO pins",
+  "description": "A Homebridge plugin for controlling an electromagnetic lock on a door",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "license": "MIT",
+  "author": "Your Name",
+  "engines": {
+    "node": ">=10.17.0"
+  },
+  "files": [
+    "dist"
+  ],
   "keywords": [
     "homebridge-plugin",
-    "homebridge",
-    "raspberry",
-    "gpio",
-    "lock",
-    "lock-mechanism",
     "electromagnetic-lock",
-    "homekit"
+    "door"
   ],
+  "dependencies": {
+    "underscore": "^1.13.1",
+    "rpio": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.17.60",
+    "@types/underscore": "^1.11.4",
+    "@types/rpio": "^1.1.0",
+    "homebridge": "^1.3.8",
+    "typescript": "^4.5.4",
+    "ts-node": "^10.4.0",
+    "jest": "^27.4.5",
+    "ts-jest": "^27.1.1"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jvmo/homebridge-intercom-door"
+    "url": "git://github.com/your-username/homebridge-intercom-door.git"
   },
-  "dependencies": {
-    "homebridge-intercom-door": "^0.0.25",
-    "node-persist": "^2.1.0",
-    "rpio": "^2.2.0",
-    "underscore": "^1.8.3"
-  },
-  "engines": {
-    "homebridge": ">=1.7.0",
-    "node": ">=20.11.0"
+  "bugs": {
+    "url": "https://github.com/your-username/homebridge-intercom-door/issues"
   },
   "homebridge": {
-    "platforms": [
-      {
-        "platform": "ElectromagneticLock",
-        "name": "ElectromagneticLock"
+    "pluginType": "accessory",
+    "accessory": "ElectromagneticLock",
+    "platform": "IntercomDoor",
+    "ui": {
+      "pluginAlias": "Intercom Door",
+      "config": {
+        "schema": "./config.schema.json"
       }
-    ],
-    "accessories": [
-      {
-        "accessory": "ElectromagneticLock",
-        "name": "YourLockName",
-        "lockPin": 17,
-        "doorPin": 18,
-        "voltagePin": 22,
-        "activeLow": true,
-        "reedSwitchActiveLow": true,
-        "unlockingDuration": 2,
-        "lockWithMemory": true
-      }
-    ],
-    "peerDependencies": {
-      "homebridge": "^1.6.0"
     }
-  },
-  "maintainers": [
-    {
-      "name": "jvmo",
-      "email": "jvmodeveloper@gmail.com"
-    }
-  ]
+  }
 }
