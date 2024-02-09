@@ -18,15 +18,13 @@
     "url": "https://github.com/jvmo/homebridge-intercom-door"
   },
   "dependencies": {
+    "homebridge": "^1.7.0",
     "node-persist": "^2.1.0",
-    "rpio": "^2.4.2",
+    "onoff": "^6.0.0",
     "underscore": "^1.13.6"
   },
-  "peerDependencies": {
-    "homebridge": "^1.7.0",
-    "hap-nodejs": ">=0.11.1"
-  },
   "engines": {
+    "homebridge": ">=1.7.0",
     "node": ">=18.19.0"
   },
   "homebridge": {
@@ -48,7 +46,11 @@
         "unlockingDuration": 2,
         "lockWithMemory": true
       }
-    ]
+    ],
+    "peerDependencies": {
+      "homebridge": "^1.7.0",
+      "hap-nodejs": ">=0.11.1"
+    }
   },
   "maintainers": [
     {
