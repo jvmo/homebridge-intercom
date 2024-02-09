@@ -1,6 +1,6 @@
 {
   "name": "homebridge-intercom-door",
-  "version": "0.0.32",
+  "version": "0.0.37",
   "description": "Homebridge plugin to control electromagnetic lock via Raspberry Pi GPIO pins",
   "license": "MIT",
   "keywords": [
