@@ -38,9 +38,9 @@
       {
         "accessory": "ElectromagneticLock",
         "name": "YourLockName",
-        "lockPin": 4,
+        "lockPin": 17,
         "doorPin": 18,
-        "voltagePin": 17,
+        "voltagePin": 22,
         "activeLow": true,
         "reedSwitchActiveLow": true,
         "unlockingDuration": 2,
