@@ -7,7 +7,7 @@ const STATE_SECURED = 1;
 const STATE_JAMMED = 2;
 const STATE_UNKNOWN = 3;
 
-module.exports = function(homebridge) {
+module.exports = function (homebridge) {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
   HomebridgeAPI = homebridge;
@@ -16,7 +16,7 @@ module.exports = function(homebridge) {
 }
 
 function ElectromagneticLockAccessory(log, config) {
-  _.defaults(config, { activeLow: true, reedSwitchActiveLow: true, unlockingDuration: 2, lockWithMemory: true });
+  _.defaults(config, { activeLow: true, reedSwitchActiveLow: true, unlockingDuration: 2, lockWithMemory: true, voltagePin: 17 });
 
   this.log = log;
   this.name = config['name'];
@@ -29,7 +29,7 @@ function ElectromagneticLockAccessory(log, config) {
   this.lockWithMemory = config['lockWithMemory'];
 
   // GPIO pin for voltage measurement
-  this.voltagePin = 17; // GPIO 17
+  this.voltagePin = config['voltagePin'];
 
   // use gpio pin numbering
   rpio.init({ gpiomem: false, mapping: 'gpio' });
@@ -89,17 +89,17 @@ function ElectromagneticLockAccessory(log, config) {
     .on('set', this.setTargetState.bind(this));
 }
 
-ElectromagneticLockAccessory.prototype.getCurrentState = function(callback) {
+ElectromagneticLockAccessory.prototype.getCurrentState = function (callback) {
   this.log("Lock current state: %s", this.currentState);
   callback(null, this.currentState);
 }
 
-ElectromagneticLockAccessory.prototype.getTargetState = function(callback) {
+ElectromagneticLockAccessory.prototype.getTargetState = function (callback) {
   this.log("Lock target state: %s", this.targetState);
   callback(null, this.targetState);
 }
 
-ElectromagneticLockAccessory.prototype.setTargetState = function(state, callback) {
+ElectromagneticLockAccessory.prototype.setTargetState = function (state, callback) {
   this.log('Setting lock to %s', state ? 'secured' : 'unsecured');
   if (state && this.lockWithMemory) {
     this.log("Can't lock electromagnetic lock with memory.");
