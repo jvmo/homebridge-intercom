@@ -64,7 +64,7 @@ function ElectromagneticLockAccessory(log, config) {
   this.unlockTimeout;
 
   // use gpio pin numbering
-  rpio.init({ mapping: 'gpio' });
+  rpio.init({ gpiomem: false, mapping: 'physical' });
   rpio.open(this.lockPin, rpio.OUTPUT, this.initialState);
 
   if (this.doorPin && !this.lockWithMemory) {
