@@ -1,11 +1,11 @@
 {
   "name": "homebridge-intercom-door",
   "description": "A Homebridge plugin for controlling an electromagnetic lock on a door",
-  "version": "1.0.0",
+  "version": "0.0.29",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "MIT",
-  "author": "Your Name",
+  "author": "jvmo",
   "engines": {
     "node": ">=10.17.0"
   },
