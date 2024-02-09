@@ -31,6 +31,10 @@ function ElectromagneticLockAccessory(log, config) {
   // GPIO pin for voltage measurement
   this.voltagePin = 17; // GPIO 17
 
+  // use gpio pin numbering
+  rpio.init({ gpiomem: false, mapping: 'gpio' });
+  rpio.open(this.lockPin, rpio.OUTPUT, this.initialState);
+
   // Setup the voltage pin as an input with both edge detection
   rpio.open(this.voltagePin, rpio.INPUT, rpio.PULL_DOWN);
   rpio.poll(this.voltagePin, this.handleVoltageChange.bind(this), rpio.POLL_BOTH);
@@ -62,10 +66,6 @@ function ElectromagneticLockAccessory(log, config) {
     .setCharacteristic(Characteristic.SerialNumber, '1234567890');
 
   this.unlockTimeout;
-
-  // use gpio pin numbering
-  rpio.init({ gpiomem: false, mapping: 'physical' });
-  rpio.open(this.lockPin, rpio.OUTPUT, this.initialState);
 
   if (this.doorPin && !this.lockWithMemory) {
     this.log("Electromagnetic lock without memory doesn't support doorPin, setting to null. Consider using a separate contact sensor.");
@@ -188,4 +188,3 @@ ElectromagneticLockAccessory.prototype.handleVoltageChange = function (pin) {
 ElectromagneticLockAccessory.prototype.getServices = function () {
   return [this.infoService, this.service];
 }
-
