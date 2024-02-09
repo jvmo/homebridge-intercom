@@ -21,7 +21,7 @@
     "homebridge": "^1.7.0",
     "node-persist": "^2.1.0",
     "rpio": "^2.4.2",
-    "underscore": "^1.8.3"
+    "underscore": "^1.13.6"
   },
   "engines": {
     "homebridge": ">=1.7.0",
